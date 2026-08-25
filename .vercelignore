@@ -1,0 +1,19 @@
+# The engine deployment needs only src/ + api/ + requirements.txt.
+#
+# pyproject.toml is excluded deliberately: Vercel's Python builder prefers
+# it over requirements.txt, and its base dependencies leave out FastAPI
+# (which lives in the `api` extra), so the function would import-error at
+# runtime. api/index.py puts src/ on sys.path rather than pip-installing
+# the package, so the build does not need the pyproject at all.
+pyproject.toml
+
+web/
+tests/
+scripts/
+docs/
+.venv/
+node_modules/
+Dockerfile
+docker-compose.yml
+Makefile
+*.md
