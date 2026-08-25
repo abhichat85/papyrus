@@ -65,8 +65,11 @@ costs the project its main property, so it is not a stylistic preference.
 | `src/papyrus/config.py` | `ConvertOptions` and `Limits` |
 | `src/papyrus/cli.py` | `papyrus` command |
 | `src/papyrus/api/` | FastAPI service |
+| `src/papyrus/mcp/` | MCP server (`papyrus-mcp`) for agent hosts |
 | `tests/make_fixtures.py` | Builds binary fixtures — do not commit blobs |
 | `web/` | Next.js landing page and live demo |
+| `api/index.py` | Vercel serverless shim — re-exports the same FastAPI app |
+| `requirements.txt` | Engine deps for Vercel only; `pyproject.toml` is canonical |
 
 ## Commands
 
@@ -76,7 +79,9 @@ pytest                           # tests
 ruff check src tests             # lint
 ruff format src tests            # format
 papyrus serve --port 8787        # API
+papyrus-mcp                      # MCP server (stdio)
 npm --prefix web run dev         # web (needs the API running)
+vercel deploy --prod             # from repo root: engine; from web/: site
 python tests/make_fixtures.py    # rebuild fixtures
 python scripts/make_samples.py   # rebuild demo documents
 ```

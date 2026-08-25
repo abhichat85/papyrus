@@ -96,6 +96,19 @@ uvicorn papyrus.api.main:app --port 8787
 curl -F file=@report.pdf http://localhost:8787/v1/convert
 ```
 
+**MCP — give your agent eyes on any file**
+
+```bash
+claude mcp add papyrus -- papyrus-mcp
+```
+
+Your agent can already read `.txt` and `.md`. This lets it read the PDF, the
+deck and the spreadsheet too. Five tools: `inspect_document` (what is this,
+and what would reading it cost?), `convert_document`, `convert_to_file`,
+`convert_to_chunks`, `list_supported_formats`. Long documents paginate with
+the exact next call in the footer, so a 300-page report never blows the
+context window.
+
 | Endpoint | Purpose |
 |---|---|
 | `POST /v1/convert` | one file → Markdown (JSON, raw Markdown, or a zip bundle) |
@@ -141,6 +154,16 @@ deleted on the way out. Enforced ceilings cover file size, PDF pages,
 spreadsheet cells, CSV rows, archive members, compression ratio (zip bombs),
 recursion depth and extracted assets. Uploaded filenames are sanitised
 against path traversal before they touch disk.
+
+## Live
+
+| | |
+|---|---|
+| Demo | https://papyrus-web.vercel.app |
+| Engine API | https://papyrus-engine.vercel.app |
+
+The hosted demo caps uploads at **4 MB** — that is the serverless request-body
+limit, not Papyrus's. Run it locally and the ceiling is 50 MB.
 
 ## Run it locally, entirely
 

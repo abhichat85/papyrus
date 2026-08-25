@@ -26,6 +26,9 @@ samples:  ## Rebuild the demo documents served by the web app
 serve:  ## Run the HTTP API on :8787
 	.venv/bin/papyrus serve --port 8787 --reload
 
+mcp:  ## Register the MCP server with Claude Code
+	claude mcp add papyrus -- $(PWD)/.venv/bin/papyrus-mcp
+
 web:  ## Run the web app on :3473 (needs `make serve` in another shell)
 	npm --prefix web run dev
 
