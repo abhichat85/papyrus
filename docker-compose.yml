@@ -1,0 +1,32 @@
+# Everything, locally. No document leaves this machine.
+#
+#   docker compose up
+#   open http://localhost:3473
+
+services:
+  engine:
+    build: .
+    image: papyrus-engine:local
+    ports:
+      - "8787:8787"
+    environment:
+      PAPYRUS_MAX_FILE_BYTES: "52428800"
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+
+  web:
+    build: ./web
+    image: papyrus-web:local
+    ports:
+      - "3473:3473"
+    environment:
+      PAPYRUS_API_URL: "http://engine:8787"
+    depends_on:
+      - engine
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
