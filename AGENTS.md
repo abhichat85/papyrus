@@ -95,7 +95,11 @@ python scripts/make_samples.py   # rebuild demo documents
    `TextParser` must stay last, because it accepts everything.
 4. Add a fixture generator to `tests/make_fixtures.py`.
 5. Add tests that assert on *structure* (a table is a `Table`, a heading
-   kept its level), not on exact output strings.
+   kept its level), not on exact output strings. The invariant suite in
+   `tests/test_invariants.py` then runs every cross-format property against
+   your fixture automatically — valid Markdown, determinism, IR round-trip,
+   re-ingestion, truncation and byte-flip fuzzing. You get all of it free;
+   read the failures before assuming they are wrong.
 6. Cover the unhappy paths: empty file, truncated file, malformed input,
    non-UTF-8 bytes, and something larger than the relevant limit.
 

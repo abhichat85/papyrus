@@ -113,6 +113,7 @@ context window.
 |---|---|
 | `POST /v1/convert` | one file → Markdown (JSON, raw Markdown, or a zip bundle) |
 | `POST /v1/chunk` | one file → chunks ready for an embedding job |
+| `POST /v1/compare` | naive extraction and Papyrus, side by side |
 | `POST /v1/detect` | identify a file without converting it |
 | `GET /v1/formats` | supported formats |
 | `GET /healthz` | liveness |
@@ -126,6 +127,17 @@ and it calls the same engine.
 papyrus serve --port 8787        # terminal one
 npm --prefix web run dev         # terminal two → http://localhost:3473
 ```
+
+## Show someone the difference
+
+Every conversion in the demo has a **share** button. It builds a before/after
+card — what a one-line text extraction returns from the same bytes, next to
+what Papyrus returns — and a link preview image to go with it.
+
+The excerpt travels *inside the link*, gzipped, rather than pointing at a
+stored record. Nothing is persisted, links never expire, and there is no
+database of other people's documents. `POST /v1/compare` returns the same
+data if you want to build your own.
 
 ## Architecture
 
@@ -179,7 +191,7 @@ reproducible: the same bytes in produce the same Markdown out.
 
 ```bash
 make install    # venv + dependencies
-make test       # 181 tests
+make test       # 859 tests
 make lint
 make serve      # API on :8787
 make web        # landing page on :3473
