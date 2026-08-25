@@ -58,6 +58,8 @@ Text extraction throws away the structure a model needs to reason.
 ## Install
 
 ```bash
+git clone https://github.com/abhichat85/papyrus.git
+cd papyrus
 uv pip install -e ".[api]"
 ```
 

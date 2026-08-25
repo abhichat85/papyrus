@@ -438,7 +438,7 @@ curl -F file=@report.pdf \\
                 matter of running a container next to the files it reads.
               </p>
               <div className="actions">
-                <a className="btn" href="https://github.com/einstein-labs/papyrus">Get the source</a>
+                <a className="btn" href="https://github.com/abhichat85/papyrus">Get the source</a>
                 <a className="btn btn--ghost" href="#top">Try it above</a>
               </div>
             </div>

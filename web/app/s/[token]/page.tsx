@@ -94,7 +94,7 @@ export default async function SharedCard({ params }: Params) {
             <Link className="btn" href="/">
               Convert your own file
             </Link>
-            <a className="btn btn--ghost" href="https://github.com/einstein-labs/papyrus">
+            <a className="btn btn--ghost" href="https://github.com/abhichat85/papyrus">
               Get the source
             </a>
           </div>
