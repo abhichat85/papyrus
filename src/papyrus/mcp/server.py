@@ -141,9 +141,7 @@ def build_server(converter: Converter | None = None) -> Any:
             "approx_tokens": len(result.markdown) // 4,
             "words": result.document.word_count,
             "structure": counts,
-            "metadata": {
-                k: v for k, v in result.document.metadata.items() if not k.startswith("_")
-            },
+            "metadata": {k: v for k, v in result.document.metadata.items() if not k.startswith("_")},
             "warnings": result.warnings,
             "reads_in_one_call": len(result.markdown) <= DEFAULT_MAX_CHARS,
         }
@@ -307,9 +305,7 @@ def build_server(converter: Converter | None = None) -> Any:
             out = _resolve(save_to)
             out.parent.mkdir(parents=True, exist_ok=True)
             out.write_text(payload, encoding="utf-8")
-            return (
-                f"Wrote {len(result.chunks)} chunks (~{tokens:,} tokens) to {out}"
-            )
+            return f"Wrote {len(result.chunks)} chunks (~{tokens:,} tokens) to {out}"
 
         window = _cut(payload, 0, max(1000, max_chars))
         header = f"{len(result.chunks)} chunks, ~{tokens:,} tokens total\n\n"

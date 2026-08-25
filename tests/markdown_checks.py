@@ -116,9 +116,7 @@ def _check_table(rows: list[tuple[int, str]]) -> list[str]:
     for number, line in rows:
         found = len(_UNESCAPED_PIPE.findall(line))
         if found != width:
-            problems.append(
-                f"line {number}: table row has {found} unescaped pipes, header has {width}"
-            )
+            problems.append(f"line {number}: table row has {found} unescaped pipes, header has {width}")
     return problems
 
 

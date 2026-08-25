@@ -19,6 +19,7 @@ tests/fixtures/generated/
 
 # Generated: rebuild with `make fixtures` / `make samples`
 tests/fixtures/sample.*
+tests/fixtures/hard/
 web/public/samples/
 *.tsbuildinfo
 .vercel

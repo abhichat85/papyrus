@@ -165,9 +165,7 @@ def test_a_clean_workbook_does_not_get_the_formula_warning(convert):
 
 
 def test_a_wide_sheet_stays_rectangular(convert):
-    wide = next(
-        t for t in tables(convert(HARD / "hard.xlsx").document) if (t.header or [""])[0] == "col1"
-    )
+    wide = next(t for t in tables(convert(HARD / "hard.xlsx").document) if (t.header or [""])[0] == "col1")
     assert len(wide.header) == 39
     assert all(len(row) == 39 for row in wide.rows)
 

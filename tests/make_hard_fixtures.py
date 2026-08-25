@@ -64,9 +64,7 @@ def docx_deep_lists() -> None:
         # Only styles the template actually defines. `add_paragraph` appends
         # the paragraph before it validates the style name, so a try/except
         # around it leaves a stray duplicate behind.
-        d.add_paragraph(
-            f"Level {level} bullet", style=style if style in available else "List Bullet"
-        )
+        d.add_paragraph(f"Level {level} bullet", style=style if style in available else "List Bullet")
     d.add_paragraph("Numbered one", style="List Number")
     d.add_paragraph("Numbered two", style="List Number")
     d.add_paragraph("Back to prose.")
@@ -288,14 +286,10 @@ def text_hard() -> None:
     )
 
     # Latin-1 bytes with no BOM.
-    (HARD / "latin1.csv").write_bytes(
-        "name,city\nRené,Zürich\nFrançois,Köln\n".encode("latin-1")
-    )
+    (HARD / "latin1.csv").write_bytes("name,city\nRené,Zürich\nFrançois,Köln\n".encode("latin-1"))
 
     # A CSV that is really one column of prose.
-    (HARD / "single-column.csv").write_text(
-        "note\nfirst observation\nsecond observation\n", encoding="utf-8"
-    )
+    (HARD / "single-column.csv").write_text("note\nfirst observation\nsecond observation\n", encoding="utf-8")
 
     # Deeply nested JSON plus unicode keys and an empty array.
     (HARD / "deep.json").write_text(
@@ -331,8 +325,7 @@ def text_hard() -> None:
         "<ul><li>one<li>two<li>three</ul>"
         "<blockquote>Quoted <em>text</em> here.</blockquote>"
         "<pre><code>if x &lt; 3:\n    pass</code></pre>"
-        "<p>Trailing text after everything." + ("padding " * 60) +
-        "</main></body></html>",
+        "<p>Trailing text after everything." + ("padding " * 60) + "</main></body></html>",
         encoding="utf-8",
     )
 

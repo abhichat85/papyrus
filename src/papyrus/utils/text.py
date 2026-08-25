@@ -87,12 +87,12 @@ def escape_cell(text: str) -> str:
 # intentional or harmless. Only the start of a line can change the
 # document's *structure*, so only the start of a line is escaped.
 _BLOCK_STARTS = (
-    re.compile(r"^(\s{0,3})(#{1,6})(\s|$)"),          # heading
-    re.compile(r"^(\s{0,3})(```|~~~)"),                # code fence
-    re.compile(r"^(\s{0,3})(\|)"),                     # table row
-    re.compile(r"^(\s{0,3})(>)"),                      # blockquote
-    re.compile(r"^(\s{0,3})([-+*])(\s)"),              # bullet
-    re.compile(r"^(\s{0,3})(\d{1,9})([.)]\s)"),        # ordered item
+    re.compile(r"^(\s{0,3})(#{1,6})(\s|$)"),  # heading
+    re.compile(r"^(\s{0,3})(```|~~~)"),  # code fence
+    re.compile(r"^(\s{0,3})(\|)"),  # table row
+    re.compile(r"^(\s{0,3})(>)"),  # blockquote
+    re.compile(r"^(\s{0,3})([-+*])(\s)"),  # bullet
+    re.compile(r"^(\s{0,3})(\d{1,9})([.)]\s)"),  # ordered item
 )
 # A line of only dashes, stars or underscores is a thematic break; a line
 # of only dashes or equals under a paragraph is a setext heading.

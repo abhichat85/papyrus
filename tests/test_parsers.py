@@ -86,7 +86,7 @@ def test_docx_bullets_become_one_list(convert, fixtures):
 
 
 def test_docx_list_depth_comes_from_the_style_name(convert, fixtures):
-    """"List Bullet 2" is one level in, even with no numbering definition."""
+    """ "List Bullet 2" is one level in, even with no numbering definition."""
     doc = convert(fixtures / "sample.docx").document
     items = next(b for b in doc.blocks if b.type == "list").content
     assert items[0].children, "sub-bullet was flattened to the top level"
@@ -202,9 +202,7 @@ def test_pdf_table_lands_inside_its_own_section(convert, fixtures):
     blocks = convert(fixtures / "sample.pdf").document.blocks
 
     def index_of(kind: str, text: str | None = None) -> int:
-        return next(
-            i for i, b in enumerate(blocks) if b.type == kind and (text is None or b.content == text)
-        )
+        return next(i for i, b in enumerate(blocks) if b.type == kind and (text is None or b.content == text))
 
     assert index_of("heading", "Financials") < index_of("table") < index_of("heading", "Notes")
 

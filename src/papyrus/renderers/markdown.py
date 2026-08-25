@@ -90,9 +90,7 @@ class MarkdownRenderer:
             return ""
         width = self.options.wrap_width
         if width and len(text) > width:
-            text = "\n".join(
-                textwrap.wrap(text, width, break_long_words=False, break_on_hyphens=False)
-            )
+            text = "\n".join(textwrap.wrap(text, width, break_long_words=False, break_on_hyphens=False))
         return escape_block_start(text)
 
     def _quote(self, block: Block) -> str:

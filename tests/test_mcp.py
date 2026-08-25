@@ -38,9 +38,7 @@ def session():
     state: dict[str, object] = {}
 
     async def serve():
-        params = StdioServerParameters(
-            command=sys.executable, args=["-m", "papyrus.mcp.server"], env=None
-        )
+        params = StdioServerParameters(command=sys.executable, args=["-m", "papyrus.mcp.server"], env=None)
         stop = asyncio.Event()
         state["stop"] = stop
         try:
@@ -72,9 +70,7 @@ def session():
     class Bridge:
         def call(self, name: str, **arguments) -> str:
             result = submit(client.call_tool(name, arguments))
-            return "\n".join(
-                block.text for block in result.content if getattr(block, "text", None)
-            )
+            return "\n".join(block.text for block in result.content if getattr(block, "text", None))
 
         def tools(self) -> list[str]:
             return [tool.name for tool in submit(client.list_tools()).tools]
@@ -155,18 +151,14 @@ def test_convert_surfaces_warnings_to_the_agent(session):
 
 
 def test_convert_to_file_costs_almost_no_context(session, tmp_path):
-    receipt = session.call(
-        "convert_to_file", path=str(FIXTURES / "sample.pptx"), output_dir=str(tmp_path)
-    )
+    receipt = session.call("convert_to_file", path=str(FIXTURES / "sample.pptx"), output_dir=str(tmp_path))
     assert "Wrote 1 file" in receipt
     assert (tmp_path / "sample.md").exists()
     assert len(receipt) < 400, "receipt should be short by design"
 
 
 def test_convert_to_file_handles_a_whole_folder(session, tmp_path):
-    receipt = session.call(
-        "convert_to_file", path=str(FIXTURES), output_dir=str(tmp_path), recursive=False
-    )
+    receipt = session.call("convert_to_file", path=str(FIXTURES), output_dir=str(tmp_path), recursive=False)
     written = list(tmp_path.glob("*.md"))
     assert len(written) >= 16
     assert len({p.name for p in written}) == len(written), "outputs collided"
@@ -176,9 +168,7 @@ def test_convert_to_file_handles_a_whole_folder(session, tmp_path):
 def test_chunks_carry_citations(session):
     import json
 
-    output = session.call(
-        "convert_to_chunks", path=str(FIXTURES / "sample.pdf"), chunk_size=400
-    )
+    output = session.call("convert_to_chunks", path=str(FIXTURES / "sample.pdf"), chunk_size=400)
     assert "chunks" in output
     body = output.split("\n\n", 1)[1]
     first = json.loads(body.splitlines()[0])
@@ -188,9 +178,7 @@ def test_chunks_carry_citations(session):
 
 def test_chunks_can_be_written_to_disk(session, tmp_path):
     out = tmp_path / "chunks.jsonl"
-    receipt = session.call(
-        "convert_to_chunks", path=str(FIXTURES / "sample.pdf"), save_to=str(out)
-    )
+    receipt = session.call("convert_to_chunks", path=str(FIXTURES / "sample.pdf"), save_to=str(out))
     assert out.exists()
     assert "Wrote" in receipt
     assert out.read_text().strip()
