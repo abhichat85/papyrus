@@ -1,10 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // The engine runs as a separate service; the web app only proxies to it.
-  env: {
-    PAPYRUS_API_URL: process.env.PAPYRUS_API_URL ?? "http://127.0.0.1:8787",
-  },
+  // PAPYRUS_API_URL and PAPYRUS_MAX_UPLOAD_BYTES are read at request time in
+  // the route handlers, not inlined here — inlining would bake the build
+  // machine's value into the bundle and make the deployed engine URL
+  // impossible to change without a rebuild.
 };
 
 export default nextConfig;

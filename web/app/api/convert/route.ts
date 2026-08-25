@@ -10,7 +10,15 @@ import { NextRequest, NextResponse } from "next/server";
  */
 
 const API = process.env.PAPYRUS_API_URL ?? "http://127.0.0.1:8787";
-const MAX_BYTES = 25 * 1024 * 1024;
+
+// Serverless platforms cap request bodies well below what the engine can
+// handle — Vercel at 4.5 MB. Locally there is no such cap, so the limit is
+// configuration rather than a constant, and the message names the real
+// reason so nobody goes hunting in the engine for it.
+const MAX_BYTES = Number(process.env.PAPYRUS_MAX_UPLOAD_BYTES ?? 25 * 1024 * 1024);
+const LIMIT_LABEL = MAX_BYTES >= 1024 * 1024
+  ? `${Math.round(MAX_BYTES / (1024 * 1024))} MB`
+  : `${Math.round(MAX_BYTES / 1024)} KB`;
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -32,7 +40,10 @@ export async function POST(request: NextRequest) {
   }
   if (file.size > MAX_BYTES) {
     return NextResponse.json(
-      { error: `The demo accepts files up to 25 MB. Run Papyrus locally for anything larger.`, code: "file_too_large" },
+      {
+        error: `This demo accepts files up to ${LIMIT_LABEL}. Papyrus itself handles 50 MB — run it locally for anything larger.`,
+        code: "file_too_large",
+      },
       { status: 413 },
     );
   }

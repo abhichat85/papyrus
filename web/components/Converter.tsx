@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { hexdump, humanBytes, structureMarks, tokenize } from "@/lib/markdown";
 
 type Chunk = {
@@ -42,7 +42,21 @@ export default function Converter() {
   const [busy, setBusy] = useState(false);
   const [over, setOver] = useState(false);
   const [view, setView] = useState<View>("markdown");
+  const [limitLabel, setLimitLabel] = useState("Nothing is stored — files are converted and discarded.");
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // The upload ceiling is set by wherever this is deployed, so ask rather
+  // than hard-coding a number the page might be wrong about.
+  useEffect(() => {
+    fetch("/api/formats")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((body) => {
+        if (body?.upload_limit_label) {
+          setLimitLabel(`Up to ${body.upload_limit_label} · nothing is stored`);
+        }
+      })
+      .catch(() => undefined);
+  }, []);
 
   const run = useCallback(async (payload: File) => {
     setBusy(true);
@@ -147,6 +161,9 @@ export default function Converter() {
             >
               <h3>Drop a document</h3>
               <p>PDF, Word, PowerPoint, Excel, HTML, EPUB, notebooks, archives — 22 formats.</p>
+              <p className="mono" style={{ fontSize: "0.68rem", letterSpacing: "0.04em" }}>
+                {limitLabel}
+              </p>
               <button className="btn" onClick={() => inputRef.current?.click()}>
                 Choose a file
               </button>
