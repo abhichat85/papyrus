@@ -31,6 +31,15 @@ def _upload(fixtures, name: str) -> dict:
 # ── meta ─────────────────────────────────────────────────────────────
 
 
+def test_root_describes_the_service(client):
+    """Opening the port in a browser must not look like a dead server."""
+    body = client.get("/").json()
+    assert body["service"] == "papyrus"
+    assert body["docs"] == "/docs"
+    assert "POST /v1/convert" in body["endpoints"]
+    assert body["formats"] > 15
+
+
 def test_healthz(client):
     assert client.get("/healthz").json()["status"] == "ok"
 

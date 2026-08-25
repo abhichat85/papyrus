@@ -29,6 +29,12 @@ serve:  ## Run the HTTP API on :8787
 web:  ## Run the web app on :3473 (needs `make serve` in another shell)
 	npm --prefix web run dev
 
+web-build:  ## Production build of the web app — stop `make web` first
+	@pgrep -f "next dev -p 3473" >/dev/null && { \
+		echo "Stop the dev server first: `next build` overwrites .next and"; \
+		echo "leaves `next dev` serving broken assets."; exit 1; } || true
+	npm --prefix web run build
+
 docker:  ## Build and run everything in containers
 	docker compose up --build
 

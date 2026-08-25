@@ -12,7 +12,7 @@ import io
 import json
 import logging
 import zipfile
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -68,6 +68,30 @@ async def papyrus_error_handler(request: Request, exc: PapyrusError) -> JSONResp
 
 
 # ── endpoints ────────────────────────────────────────────────────────
+
+
+@app.get("/", tags=["meta"])
+async def index() -> dict[str, Any]:
+    """What this service is, for anyone who opens the port in a browser.
+
+    Without this, hitting the root gives a bare 404 and the service looks
+    dead when it is running perfectly well.
+    """
+    return {
+        "service": "papyrus",
+        "version": __version__,
+        "description": "Universal document ingestion — any file in, agent-ready Markdown out.",
+        "docs": "/docs",
+        "endpoints": {
+            "POST /v1/convert": "Convert one document (json | markdown | bundle)",
+            "POST /v1/chunk": "Convert and split into embedding-ready chunks",
+            "POST /v1/detect": "Identify a file without converting it",
+            "GET /v1/formats": "Every supported format",
+            "GET /healthz": "Liveness",
+        },
+        "formats": len(_registry.supported_formats()),
+        "example": "curl -F file=@report.pdf http://localhost:8787/v1/convert",
+    }
 
 
 @app.get("/healthz", tags=["meta"])
