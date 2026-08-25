@@ -58,6 +58,7 @@ export default function Home() {
             </span>
           </a>
           <div className="nav-links">
+            <a href="#mcp">MCP</a>
             <a href="#formats">Formats</a>
             <a href="#pipeline" className="optional">Pipeline</a>
             <a href="#use">Use it</a>
@@ -88,6 +89,52 @@ export default function Home() {
 
         <Converter />
       </header>
+
+      <section id="mcp">
+        <div className="shell band">
+          <div className="mcp-grid">
+            <div>
+              <p className="eyebrow">One line</p>
+              <h2>Give your agent eyes on any file.</h2>
+              <p className="lede" style={{ marginTop: "1.1rem" }}>
+                Your agent can already read <code>.txt</code> and <code>.md</code>. It cannot read
+                the PDF, the deck, or the spreadsheet — those are opaque binaries, and the usual
+                workaround is a shell pipeline it reinvents every session.
+              </p>
+              <p className="lede" style={{ marginTop: "0.9rem" }}>
+                Papyrus ships an MCP server. Five tools, shaped around the context window rather
+                than around the Python API: a 300-page report paginates instead of swallowing the
+                conversation, and <code>inspect_document</code> tells the model what reading a file
+                would cost before it spends the tokens.
+              </p>
+            </div>
+
+            <div className="slab">
+              <div className="slab-bar">
+                <span className="eyebrow">Install</span>
+              </div>
+              <pre>
+<span className="cm"># Claude Code</span>{`
+claude mcp add papyrus -- papyrus-mcp
+
+`}<span className="cm"># or any MCP host, in its config</span>{`
+{
+  `}<span className="st">&quot;papyrus&quot;</span>{`: { `}<span className="st">&quot;command&quot;</span>{`: `}<span className="st">&quot;papyrus-mcp&quot;</span>{` }
+}`}
+              </pre>
+              <table className="ledger" style={{ padding: "0 1rem 1rem" }}>
+                <tbody>
+                  <tr><td>inspect_document</td><td>what is this, and what would reading it cost?</td></tr>
+                  <tr><td>convert_document</td><td>read it as Markdown, paginated</td></tr>
+                  <tr><td>convert_to_file</td><td>write to disk, spend almost no context</td></tr>
+                  <tr><td>convert_to_chunks</td><td>retrieval chunks with page citations</td></tr>
+                  <tr><td>list_supported_formats</td><td>everything it can read</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
 
       <section id="why">
         <div className="shell band">
@@ -195,8 +242,8 @@ conservative plan set at the start of the period.
       <section id="use">
         <div className="shell band">
           <div className="section-head">
-            <p className="eyebrow">Three ways in</p>
-            <h2>A command, an import, or an endpoint.</h2>
+            <p className="eyebrow">Four ways in</p>
+            <h2>A command, an import, an endpoint, or a tool call.</h2>
           </div>
 
           <div style={{ display: "grid", gap: "1rem", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))" }}>
@@ -248,9 +295,130 @@ curl -F file=@report.pdf \\
 
 `}<span className="cm"># POST /v1/convert   markdown | bundle</span>{`
 `}<span className="cm"># POST /v1/chunk     embedding-ready</span>{`
+`}<span className="cm"># POST /v1/compare   before and after</span>{`
 `}<span className="cm"># POST /v1/detect    identify only</span>{`
 `}<span className="cm"># GET  /v1/formats   what is supported</span>
               </pre>
+            </div>
+
+            <div className="slab">
+              <div className="slab-bar">
+                <span className="eyebrow">MCP</span>
+              </div>
+              <pre>
+<span className="kw">claude</span>{` mcp add papyrus -- papyrus-mcp
+
+`}<span className="cm"># then, in the conversation:</span>{`
+`}<span className="st">&quot;Read Q3-board-deck.pptx and pull
+ out the revenue table.&quot;</span>{`
+
+`}<span className="cm"># the model calls inspect_document,</span>{`
+`}<span className="cm"># then convert_document, and answers</span>
+              </pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="who">
+        <div className="shell band">
+          <div className="section-head">
+            <p className="eyebrow">What it is for</p>
+            <h2>Four jobs, one unglamorous step.</h2>
+          </div>
+
+          <div className="pipeline">
+            <div className="stage">
+              <span className="stage-key">retrieval</span>
+              <h3>Filling an index</h3>
+              <p>
+                Chunks arrive with heading paths and page numbers, so a retrieved fragment can
+                still cite where it came from. Retrieval quality is capped by ingestion quality.
+              </p>
+            </div>
+            <div className="stage">
+              <span className="stage-key">agents</span>
+              <h3>Handing files to a model</h3>
+              <p>
+                One MCP install and the agent reads decks, contracts and workbooks the same way it
+                reads source code.
+              </p>
+            </div>
+            <div className="stage">
+              <span className="stage-key">evals</span>
+              <h3>Building a test set</h3>
+              <p>
+                Conversion is deterministic — the same bytes always produce the same Markdown — so
+                a fixture stays a fixture and a diff means something.
+              </p>
+            </div>
+            <div className="stage">
+              <span className="stage-key">archives</span>
+              <h3>Moving a decade of files</h3>
+              <p>
+                Point it at a directory or a zip. It converts every member, reports what it could
+                not read, and never stops on the first bad file.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="faq">
+        <div className="shell band">
+          <div className="section-head">
+            <p className="eyebrow">Straight answers</p>
+            <h2>The questions people actually ask.</h2>
+          </div>
+
+          <div className="faq">
+            <div>
+              <h3>Does it use an LLM?</h3>
+              <p>
+                No. There is no model call in the conversion path, which is what makes cost
+                predictable and output reproducible. An AI cleanup pass belongs after the
+                intermediate representation, never inside a parser.
+              </p>
+            </div>
+            <div>
+              <h3>What happens to my documents?</h3>
+              <p>
+                Nothing is written to disk and nothing is retained. The hosted demo converts in
+                memory and discards; run the container and the file never leaves your network at
+                all. Even share links carry their excerpt inside the URL rather than a database.
+              </p>
+            </div>
+            <div>
+              <h3>How is this different from pdftotext or MarkItDown?</h3>
+              <p>
+                Those give you the words. Papyrus keeps the structure the words were arranged in —
+                heading levels, table headers, reading order, page provenance — because that is the
+                part a model needs and the part flat text throws away.
+              </p>
+            </div>
+            <div>
+              <h3>What about scanned PDFs?</h3>
+              <p>
+                It detects them and says so rather than returning a confident blank. Install the
+                OCR extra and pass <code>--ocr</code> to transcribe them; that path needs Tesseract
+                on the host and is approximate rather than deterministic.
+              </p>
+            </div>
+            <div>
+              <h3>Will it choke on a 400 MB zip of mixed junk?</h3>
+              <p>
+                It will refuse it, on purpose, and tell you which ceiling it hit. Every limit —
+                size, pages, cells, archive members, compression ratio, nesting depth — is an
+                environment variable.
+              </p>
+            </div>
+            <div>
+              <h3>Can I add a format?</h3>
+              <p>
+                A parser is one file of about 150 lines that returns the intermediate
+                representation. It inherits the whole invariant suite the moment its fixture lands,
+                so you find out immediately if it produces Markdown nobody can parse.
+              </p>
             </div>
           </div>
         </div>
