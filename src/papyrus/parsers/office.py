@@ -277,7 +277,17 @@ def _docx_table(source_table: Any) -> Block | None:
     rows: list[list[str]] = []
     for row in source_table.rows:
         cells: list[str] = []
+        seen: set[int] = set()
         for cell in row.cells:
+            # python-docx returns the *same* cell object for every column a
+            # merge spans, so reading them naively repeats the value across
+            # the span — a merged total of 190 shows up in both columns as
+            # if it were two numbers.
+            identity = id(cell._tc)
+            if identity in seen:
+                cells.append("")
+                continue
+            seen.add(identity)
             cells.append(clean("\n".join(p.text for p in cell.paragraphs)))
         rows.append(cells)
     rows = trim(rows)
@@ -531,6 +541,7 @@ class XlsxParser(BaseParser):
         sheet_names = list(book.sheetnames)
         doc.metadata["sheets"] = sheet_names
         budget = limits.max_table_cells
+        blank_cells = False
 
         try:
             for name in sheet_names:
@@ -542,6 +553,8 @@ class XlsxParser(BaseParser):
 
                 rows, truncated = _sheet_rows(sheet, limits, budget)
                 budget -= sum(len(r) for r in rows)
+                if any(not cell.strip() for row in rows for cell in row):
+                    blank_cells = True
                 rows = trim(rows)
                 if not rows:
                     continue
@@ -555,9 +568,51 @@ class XlsxParser(BaseParser):
         finally:
             book.close()
 
+        # An empty cell might be an empty cell, or it might be a formula
+        # whose result was never cached — a workbook written by a script has
+        # no cached values at all, so whole columns come back blank. Saying
+        # which it is turns a confusing silence into a fixable instruction.
+        if blank_cells:
+            with_formulas = _sheets_with_formulas(data)
+            if with_formulas:
+                listed = ", ".join(f"'{n}'" for n in with_formulas[:4])
+                doc.warn(
+                    f"Formula results are missing from {listed}. Excel stores the last "
+                    "computed value, and this workbook has none — open and save it in a "
+                    "spreadsheet app, then convert again."
+                )
+
         if not doc.blocks:
             doc.warn("Workbook contained no data.")
         return doc
+
+
+def _sheets_with_formulas(data: bytes) -> list[str]:
+    """Sheets containing formula cells, read without the cached-value pass.
+
+    Only called when at least one cell came back blank, so the second load
+    is paid for exactly when it can explain something.
+    """
+    import openpyxl
+
+    found: list[str] = []
+    try:
+        book = openpyxl.load_workbook(io.BytesIO(data), read_only=True, data_only=False)
+    except Exception:
+        return found
+    try:
+        for name in book.sheetnames:
+            sheet = book[name]
+            try:
+                for row in sheet.iter_rows(values_only=True):
+                    if any(isinstance(v, str) and v.startswith("=") for v in row):
+                        found.append(name)
+                        break
+            except Exception:
+                continue
+    finally:
+        book.close()
+    return found
 
 
 def _sheet_rows(sheet: Any, limits: Any, budget: int) -> tuple[list[list[str]], bool]:
