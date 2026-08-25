@@ -29,6 +29,9 @@ api = [
     "uvicorn[standard]>=0.34.0",
     "python-multipart>=0.0.20",
 ]
+mcp = [
+    "mcp>=2.0.0",
+]
 ocr = [
     "pytesseract>=0.3.13",
     "pillow>=11.0.0",
@@ -42,6 +45,7 @@ dev = [
 
 [project.scripts]
 papyrus = "papyrus.cli:main"
+papyrus-mcp = "papyrus.mcp.server:main"
 
 [build-system]
 requires = ["hatchling"]
