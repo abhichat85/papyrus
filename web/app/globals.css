@@ -1,0 +1,677 @@
+/* ─────────────────────────────────────────────────────────────
+   Papyrus
+
+   Two historic manuscript pigments, each with one job:
+     cinnabar  — structure Papyrus RECOVERED (rubrication, literally)
+     lapis     — machine surfaces (code, output, the API)
+   Nothing else is allowed to be coloured.
+
+   Three typefaces, each standing for one side of the product:
+     Newsreader          — the human document
+     Bricolage Grotesque — the engine
+     JetBrains Mono      — machine output
+   ───────────────────────────────────────────────────────────── */
+
+:root {
+  --vellum: #eff0ea;
+  --vellum-deep: #e4e6de;
+  --vellum-sunk: #d8dbd1;
+  --ink: #171a1d;
+  --ink-soft: #5d646c;
+  --ink-faint: #8b9199;
+  --cinnabar: #be3a24;
+  --cinnabar-wash: rgba(190, 58, 36, 0.09);
+  --lapis: #1f3fa8;
+  --lapis-wash: rgba(31, 63, 168, 0.07);
+  --rule: rgba(23, 26, 29, 0.14);
+  --rule-soft: rgba(23, 26, 29, 0.07);
+
+  --display: var(--font-display), "Helvetica Neue", Arial, sans-serif;
+  --body: var(--font-body), Georgia, "Times New Roman", serif;
+  --mono: var(--font-mono), ui-monospace, "SF Mono", Menlo, monospace;
+
+  --gutter: clamp(1.25rem, 4vw, 4rem);
+  --measure: 60ch;
+  --seam-width: 34px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --vellum: #14161a;
+    --vellum-deep: #1b1e23;
+    --vellum-sunk: #23272e;
+    --ink: #e7e8e3;
+    --ink-soft: #a0a6ae;
+    --ink-faint: #6f767f;
+    --cinnabar: #ee6a4f;
+    --cinnabar-wash: rgba(238, 106, 79, 0.12);
+    --lapis: #8aa4ff;
+    --lapis-wash: rgba(138, 164, 255, 0.11);
+    --rule: rgba(231, 232, 227, 0.18);
+    --rule-soft: rgba(231, 232, 227, 0.09);
+  }
+}
+
+:root[data-theme="dark"] {
+  --vellum: #14161a;
+  --vellum-deep: #1b1e23;
+  --vellum-sunk: #23272e;
+  --ink: #e7e8e3;
+  --ink-soft: #a0a6ae;
+  --ink-faint: #6f767f;
+  --cinnabar: #ee6a4f;
+  --cinnabar-wash: rgba(238, 106, 79, 0.12);
+  --lapis: #8aa4ff;
+  --lapis-wash: rgba(138, 164, 255, 0.11);
+  --rule: rgba(231, 232, 227, 0.18);
+  --rule-soft: rgba(231, 232, 227, 0.09);
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--vellum);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 17px;
+  line-height: 1.6;
+  font-synthesis-weight: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection { background: var(--cinnabar); color: var(--vellum); }
+
+a { color: inherit; }
+
+:focus-visible {
+  outline: 2px solid var(--lapis);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* ── type scale ─────────────────────────────────────────────── */
+
+.display {
+  font-family: var(--display);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  line-height: 0.92;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.eyebrow {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0;
+}
+
+.lede {
+  font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+  line-height: 1.5;
+  color: var(--ink-soft);
+  max-width: 46ch;
+  margin: 0;
+}
+
+.mono { font-family: var(--mono); }
+
+/* ── layout ─────────────────────────────────────────────────── */
+
+.shell {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+section { border-top: 1px solid var(--rule); }
+
+.band { padding: clamp(3.5rem, 8vw, 6.5rem) 0; }
+
+.section-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.9rem;
+  margin-bottom: clamp(2rem, 4vw, 3rem);
+}
+
+.section-head h2 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: clamp(1.75rem, 3.6vw, 2.75rem);
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+  margin: 0;
+  max-width: 22ch;
+  text-wrap: balance;
+}
+
+/* ── nav ────────────────────────────────────────────────────── */
+
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: color-mix(in srgb, var(--vellum) 88%, transparent);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--rule);
+}
+
+.nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  height: 58px;
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: -0.02em;
+  text-decoration: none;
+}
+
+.nav-links {
+  display: flex;
+  gap: 1.5rem;
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+}
+
+.nav-links a { color: var(--ink-soft); text-decoration: none; }
+.nav-links a:hover { color: var(--ink); }
+
+@media (max-width: 640px) { .nav-links .optional { display: none; } }
+
+/* ── hero ───────────────────────────────────────────────────── */
+
+.hero { padding: clamp(3rem, 7vw, 5.5rem) 0 clamp(2rem, 4vw, 3rem); }
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+  gap: clamp(1.5rem, 4vw, 3.5rem);
+  align-items: end;
+}
+
+@media (max-width: 900px) {
+  .hero-grid { grid-template-columns: minmax(0, 1fr); align-items: start; }
+}
+
+.hero h1 { font-size: clamp(2.6rem, 7.4vw, 5.4rem); }
+
+/* The second line is the machine's answer, so it takes the machine colour. */
+.hero h1 .answer { color: var(--lapis); display: block; }
+
+.hero-note {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.4rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+  text-transform: uppercase;
+  margin: 1.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.hero-note li { display: flex; align-items: center; gap: 0.45rem; }
+.hero-note li::before {
+  content: "";
+  width: 5px; height: 5px;
+  background: var(--cinnabar);
+}
+
+/* ── converter ──────────────────────────────────────────────── */
+
+.converter {
+  border: 1px solid var(--ink);
+  background: var(--vellum-deep);
+  margin-top: clamp(2rem, 4vw, 3rem);
+}
+
+.converter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 0.85rem;
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  color: var(--ink-soft);
+  flex-wrap: wrap;
+}
+
+.converter-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--seam-width) minmax(0, 1.25fr);
+  min-height: 430px;
+}
+
+@media (max-width: 860px) {
+  .converter-body { grid-template-columns: minmax(0, 1fr); }
+  .seam { display: none; }
+  .pane--source { border-bottom: 1px solid var(--rule); }
+}
+
+.pane { display: flex; flex-direction: column; min-width: 0; }
+
+.pane-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid var(--rule-soft);
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.pane-head .count { letter-spacing: 0.04em; text-transform: none; }
+
+.pane-scroll {
+  flex: 1;
+  overflow: auto;
+  padding: 0.9rem;
+  max-height: 62vh;
+}
+
+.pane--output { background: var(--vellum); }
+
+/* ── the seam ───────────────────────────────────────────────────
+   Papyrus is two layers of reed strips laid at 90° and pressed.
+   This band is that lamination: fibre ticks running across the
+   join, and — once a file is converted — a cinnabar mark at the
+   height of every heading the engine recovered. It is a minimap
+   of structure, not an ornament.                                */
+
+.seam {
+  position: relative;
+  border-left: 1px solid var(--rule);
+  border-right: 1px solid var(--rule);
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      var(--rule-soft) 0 1px,
+      transparent 1px 7px
+    );
+  overflow: hidden;
+}
+
+.seam-mark {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--cinnabar);
+  transform: scaleX(0.34);
+  transform-origin: left;
+  animation: seam-mark-in 420ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+}
+
+.seam-mark[data-depth="1"] { transform: scaleX(1); }
+.seam-mark[data-depth="2"] { transform: scaleX(0.66); }
+.seam-mark[data-depth="3"] { transform: scaleX(0.4); }
+.seam-mark[data-depth="4"] { transform: scaleX(0.24); background: var(--ink-faint); }
+
+.seam-mark--table { background: var(--lapis); }
+
+@keyframes seam-mark-in {
+  from { opacity: 0; transform: scaleX(0); }
+}
+
+.seam-sweep {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 42%;
+  background: linear-gradient(to bottom, transparent, var(--cinnabar-wash), transparent);
+  animation: seam-sweep 1.1s linear infinite;
+}
+
+@keyframes seam-sweep {
+  from { top: -42%; }
+  to { top: 100%; }
+}
+
+/* ── drop zone ──────────────────────────────────────────────── */
+
+.drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+  flex: 1;
+  padding: 2rem 1.25rem;
+  text-align: center;
+  border: 1px dashed var(--rule);
+  margin: 0.9rem;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+
+.drop[data-over="true"] {
+  border-color: var(--cinnabar);
+  background: var(--cinnabar-wash);
+}
+
+.drop h3 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.15rem;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.drop p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  max-width: 34ch;
+}
+
+.samples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: center;
+  margin-top: 0.25rem;
+}
+
+/* ── controls ───────────────────────────────────────────────── */
+
+.btn {
+  font-family: var(--mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: var(--vellum);
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  transition: transform 90ms ease, background 140ms ease;
+}
+
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+
+.btn--ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--rule);
+}
+
+.btn--ghost:hover { border-color: var(--ink); }
+
+.btn--small { padding: 0.32rem 0.6rem; font-size: 0.7rem; }
+
+.btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+.tabs { display: flex; gap: 0.35rem; }
+
+.tab {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ink-faint);
+  cursor: pointer;
+}
+
+.tab[aria-selected="true"] {
+  color: var(--ink);
+  border-color: var(--rule);
+  background: var(--vellum-sunk);
+}
+
+/* ── code & output ──────────────────────────────────────────── */
+
+pre, code {
+  font-family: var(--mono);
+  /* JetBrains Mono ligates `--` into a dash, which silently misrepresents
+     the Markdown and HTML comments this page is showing off. */
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "calt" 0;
+}
+
+.out {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.65;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--ink);
+}
+
+/* Rubrication: the structure Papyrus recovered is marked in red, the way
+   a scribe marked it. Global, so the live output and the static example
+   in the comparison read identically. */
+.h { color: var(--cinnabar); font-weight: 700; }
+.fm { color: var(--ink-faint); }
+.tbl { color: var(--lapis); }
+.fence { color: var(--lapis); }
+.anchor { color: var(--ink-faint); font-style: italic; }
+
+.hex {
+  margin: 0;
+  font-size: 0.7rem;
+  line-height: 1.75;
+  color: var(--ink-soft);
+  white-space: pre;
+}
+
+.hex .addr { color: var(--ink-faint); }
+.hex .ascii { color: var(--ink); }
+
+.facts {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.3rem 1rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  margin: 0 0 1rem;
+}
+
+.facts dt { color: var(--ink-faint); letter-spacing: 0.06em; }
+.facts dd { margin: 0; overflow-wrap: anywhere; }
+.facts dd.accent { color: var(--cinnabar); }
+
+.warn {
+  border-left: 2px solid var(--cinnabar);
+  background: var(--cinnabar-wash);
+  padding: 0.5rem 0.7rem;
+  margin: 0 0 0.9rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.warn ul { margin: 0.3rem 0 0; padding-left: 1rem; }
+
+/* ── comparison ─────────────────────────────────────────────── */
+
+.compare {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border: 1px solid var(--rule);
+}
+
+@media (max-width: 780px) { .compare { grid-template-columns: minmax(0, 1fr); } }
+
+.compare > div { padding: 1.1rem; min-width: 0; }
+.compare > div + div { border-left: 1px solid var(--rule); }
+
+@media (max-width: 780px) {
+  .compare > div + div { border-left: none; border-top: 1px solid var(--rule); }
+}
+
+.compare h3 {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 0 0 0.85rem;
+}
+
+.compare pre { font-size: 0.73rem; line-height: 1.7; margin: 0; white-space: pre-wrap; }
+
+.loss { color: var(--ink-faint); }
+.loss s { text-decoration-color: var(--cinnabar); }
+
+/* ── ledger (formats / limits) ──────────────────────────────── */
+
+.ledger {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 0.78rem;
+}
+
+.ledger th {
+  text-align: left;
+  font-weight: 400;
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  padding: 0 0 0.6rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.ledger td { padding: 0.5rem 1rem 0.5rem 0; border-bottom: 1px solid var(--rule-soft); vertical-align: top; }
+.ledger td:first-child { color: var(--cinnabar); white-space: nowrap; }
+.ledger td:last-child { padding-right: 0; color: var(--ink-soft); }
+
+.two-col { columns: 2; column-gap: clamp(1.5rem, 4vw, 3rem); }
+@media (max-width: 720px) { .two-col { columns: 1; } }
+
+/* ── pipeline ───────────────────────────────────────────────── */
+
+.pipeline {
+  display: grid;
+  gap: 1px;
+  background: var(--rule);
+  border: 1px solid var(--rule);
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+.stage {
+  background: var(--vellum);
+  padding: 1.1rem 1rem 1.25rem;
+  min-width: 0;
+}
+
+.stage-key {
+  font-family: var(--mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  display: block;
+  margin-bottom: 0.6rem;
+}
+
+.stage h3 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: -0.015em;
+  margin: 0 0 0.4rem;
+}
+
+.stage p { margin: 0; font-size: 0.85rem; line-height: 1.5; color: var(--ink-soft); }
+
+.stage--ir { background: var(--lapis-wash); }
+.stage--ir .stage-key { color: var(--lapis); }
+
+/* ── code tabs ──────────────────────────────────────────────── */
+
+.slab {
+  border: 1px solid var(--rule);
+  background: var(--vellum-deep);
+}
+
+.slab-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.slab pre {
+  margin: 0;
+  padding: 1rem;
+  overflow-x: auto;
+  font-size: 0.78rem;
+  line-height: 1.7;
+}
+
+.slab .cm { color: var(--ink-faint); }
+.slab .kw { color: var(--lapis); }
+.slab .st { color: var(--cinnabar); }
+
+/* ── closing ────────────────────────────────────────────────── */
+
+.close-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(1.5rem, 4vw, 3rem);
+  align-items: start;
+}
+
+@media (max-width: 780px) { .close-grid { grid-template-columns: minmax(0, 1fr); } }
+
+.actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1.5rem; }
+
+footer {
+  border-top: 1px solid var(--rule);
+  padding: 2rem 0 3rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+}
+
+.footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.footer-inner a { text-decoration: none; }
+.footer-inner a:hover { color: var(--ink); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
