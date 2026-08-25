@@ -21,6 +21,7 @@ from fastapi.responses import JSONResponse, PlainTextResponse, Response
 from papyrus import __version__
 from papyrus.api.schemas import (
     ChunkResponse,
+    CompareResponse,
     ConvertResponse,
     DetectResponse,
     ErrorResponse,
@@ -85,6 +86,7 @@ async def index() -> dict[str, Any]:
         "endpoints": {
             "POST /v1/convert": "Convert one document (json | markdown | bundle)",
             "POST /v1/chunk": "Convert and split into embedding-ready chunks",
+            "POST /v1/compare": "Convert naively and properly, side by side",
             "POST /v1/detect": "Identify a file without converting it",
             "GET /v1/formats": "Every supported format",
             "GET /healthz": "Liveness",
@@ -177,6 +179,28 @@ async def convert_endpoint(
         duration_ms=result.duration_ms,
     )
     return JSONResponse(payload.model_dump())
+
+
+@app.post("/v1/compare", response_model=CompareResponse, tags=["convert"])
+async def compare_endpoint(file: Annotated[UploadFile, File()]) -> CompareResponse:
+    """Convert a document twice: naively, and properly.
+
+    Returns both, plus a count of the structure the naive pass could not
+    express. This powers the shareable before/after card, and it is the
+    only honest way to state the product's claim.
+    """
+    from papyrus.compare import compare as build_comparison
+
+    data = await _read(file)
+    filename = safe_name(file.filename or "upload")
+    options = ConvertOptions(frontmatter=True, images="placeholder", limits=_limits)
+    result = _converter.convert_bytes(data, filename, options)
+    comparison = build_comparison(data, result)
+
+    return CompareResponse(
+        **comparison.to_dict(),
+        duration_ms=result.duration_ms,
+    )
 
 
 @app.post("/v1/chunk", response_model=ChunkResponse, tags=["convert"])

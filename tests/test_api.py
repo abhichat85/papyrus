@@ -136,6 +136,30 @@ def test_convert_rejects_an_invalid_image_mode(client, fixtures):
     assert response.status_code == 400
 
 
+# ── compare ──────────────────────────────────────────────────────────
+
+
+def test_compare_returns_both_sides_and_the_delta(client, fixtures):
+    response = client.post("/v1/compare", files=_upload(fixtures, "sample.docx"))
+    assert response.status_code == 200
+    body = response.json()
+    assert "Metric" not in body["baseline"], "the naive Word path must not find tables"
+    assert "| Metric | 2024 | 2025 |" in body["markdown"]
+    assert body["recovered"]["tables"] == 1
+    assert body["headline"].startswith("Recovered ")
+
+
+def test_compare_works_for_every_demo_sample(client, fixtures):
+    for name in ("sample.pdf", "sample.pptx", "sample.xlsx", "sample.csv"):
+        body = client.post("/v1/compare", files=_upload(fixtures, name)).json()
+        assert body["markdown"]
+        assert body["headline"]
+
+
+def test_root_advertises_compare(client):
+    assert "POST /v1/compare" in client.get("/").json()["endpoints"]
+
+
 # ── chunk ────────────────────────────────────────────────────────────
 
 

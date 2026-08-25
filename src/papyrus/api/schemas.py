@@ -43,6 +43,18 @@ class ChunkResponse(BaseModel):
     duration_ms: int
 
 
+class CompareResponse(BaseModel):
+    filename: str
+    format: str
+    title: str | None = None
+    baseline: str = Field(description="What a one-line text extraction returns.")
+    markdown: str = Field(description="What Papyrus returns.")
+    recovered: dict[str, int]
+    headline: str
+    warnings: list[str] = []
+    duration_ms: int
+
+
 class DetectResponse(BaseModel):
     filename: str
     format: str
