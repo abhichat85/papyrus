@@ -17,7 +17,7 @@ from typing import Any
 from papyrus.config import ConvertOptions
 from papyrus.ir import Block, Document, ListItem, Table
 from papyrus.utils.tables import alignments
-from papyrus.utils.text import escape_cell
+from papyrus.utils.text import escape_block_start, escape_cell
 
 
 class MarkdownRenderer:
@@ -31,7 +31,9 @@ class MarkdownRenderer:
             parts.append(self.frontmatter(doc))
         # `passthrough` sources (Markdown in, Markdown out) already carry
         # their own heading structure — adding a title would duplicate it.
-        if doc.title and not doc.metadata.get("passthrough"):
+        # So does a document whose first heading already says the title,
+        # which happens whenever the title was inferred from the filename.
+        if doc.title and not doc.metadata.get("passthrough") and not _title_is_repeated(doc):
             parts.append(f"# {_inline_safe(doc.title)}")
 
         for block in doc.blocks:
@@ -88,11 +90,13 @@ class MarkdownRenderer:
             return ""
         width = self.options.wrap_width
         if width and len(text) > width:
-            return "\n".join(textwrap.wrap(text, width, break_long_words=False, break_on_hyphens=False))
-        return text
+            text = "\n".join(
+                textwrap.wrap(text, width, break_long_words=False, break_on_hyphens=False)
+            )
+        return escape_block_start(text)
 
     def _quote(self, block: Block) -> str:
-        lines = str(block.content).strip().split("\n")
+        lines = escape_block_start(str(block.content).strip()).split("\n")
         return "\n".join(f"> {line}" if line else ">" for line in lines)
 
     def _code(self, block: Block) -> str:
@@ -219,6 +223,17 @@ def _html(text: str) -> str:
 
 
 # ── helpers ──────────────────────────────────────────────────────────
+
+
+def _title_is_repeated(doc: Document) -> bool:
+    """True when the document opens with a heading that says the title."""
+    for block in doc.blocks:
+        if block.type == "page_break":
+            continue
+        if block.type != "heading":
+            return False
+        return _inline_safe(str(block.content)).casefold() == _inline_safe(doc.title or "").casefold()
+    return False
 
 
 def _inline_safe(text: str) -> str:

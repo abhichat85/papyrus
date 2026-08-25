@@ -82,6 +82,55 @@ def escape_cell(text: str) -> str:
     return str(text).replace("\\", "\\\\").replace("|", "\\|").replace("\n", "<br>").strip()
 
 
+# Block constructs that a line of document text can accidentally become.
+# Inline syntax (**bold**, _em_, [link](x)) is left alone — it is either
+# intentional or harmless. Only the start of a line can change the
+# document's *structure*, so only the start of a line is escaped.
+_BLOCK_STARTS = (
+    re.compile(r"^(\s{0,3})(#{1,6})(\s|$)"),          # heading
+    re.compile(r"^(\s{0,3})(```|~~~)"),                # code fence
+    re.compile(r"^(\s{0,3})(\|)"),                     # table row
+    re.compile(r"^(\s{0,3})(>)"),                      # blockquote
+    re.compile(r"^(\s{0,3})([-+*])(\s)"),              # bullet
+    re.compile(r"^(\s{0,3})(\d{1,9})([.)]\s)"),        # ordered item
+)
+# A line of only dashes, stars or underscores is a thematic break; a line
+# of only dashes or equals under a paragraph is a setext heading.
+_BREAK_LINE = re.compile(r"^\s{0,3}([-*_=])[\s]*(?:\1[\s]*){1,}$")
+
+
+def escape_block_start(text: str) -> str:
+    """Stop document text from becoming Markdown structure.
+
+    A paragraph whose text is ``` opens a code fence that swallows the rest
+    of the document. A paragraph reading `| a | b |` becomes a broken table.
+    Both are real content in real documents — legal contracts full of
+    dashes, changelogs quoting fences — so the marker is escaped rather
+    than the text being dropped or mangled.
+    """
+    out: list[str] = []
+    for line in text.split("\n"):
+        out.append(_escape_line(line))
+    return "\n".join(out)
+
+
+def _escape_line(line: str) -> str:
+    if not line.strip():
+        return line
+
+    if _BREAK_LINE.match(line):
+        indent = len(line) - len(line.lstrip())
+        return line[:indent] + "\\" + line[indent:]
+
+    for pattern in _BLOCK_STARTS:
+        match = pattern.match(line)
+        if match:
+            indent, marker = match.group(1), match.group(2)
+            rest = line[len(indent) + len(marker) :]
+            return f"{indent}\\{marker}{rest}"
+    return line
+
+
 def slugify(text: str, max_length: int = 60) -> str:
     text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode()
     text = re.sub(r"[^\w\s-]", "", text).strip().lower()
