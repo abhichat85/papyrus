@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { hexdump, humanBytes, structureMarks, tokenize } from "@/lib/markdown";
+import { buildPayload } from "@/lib/share";
 
 type Chunk = {
   id: string;
@@ -24,9 +25,12 @@ type Result = {
   warnings: string[];
   duration_ms: number;
   chunks: Chunk[];
+  baseline?: string;
+  headline?: string;
+  recovered?: Record<string, number>;
 };
 
-type View = "markdown" | "chunks" | "seam";
+type View = "markdown" | "chunks" | "before";
 
 const SAMPLES = [
   { label: "annual-report.pdf", path: "/samples/annual-report.pdf" },
@@ -43,6 +47,8 @@ export default function Converter() {
   const [over, setOver] = useState(false);
   const [view, setView] = useState<View>("markdown");
   const [limitLabel, setLimitLabel] = useState("Nothing is stored — files are converted and discarded.");
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // The upload ceiling is set by wherever this is deployed, so ask rather
@@ -62,6 +68,7 @@ export default function Converter() {
     setBusy(true);
     setError(null);
     setResult(null);
+    setShareUrl(null);
     setView("markdown");
 
     const buffer = await payload.arrayBuffer();
@@ -99,6 +106,47 @@ export default function Converter() {
     [run],
   );
 
+  const share = useCallback(async () => {
+    if (!result) return;
+    setSharing(true);
+    try {
+      const response = await fetch("/api/share", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(
+          buildPayload({
+            filename: result.filename,
+            format: result.format,
+            title: result.title,
+            headline: result.headline ?? "Structure preserved, provenance attached.",
+            baseline: result.baseline ?? "",
+            markdown: result.markdown,
+            recovered: result.recovered ?? {},
+          }),
+        ),
+      });
+      const body = await response.json();
+      if (!response.ok) {
+        setError(body.error ?? "Could not build a share link.");
+        return;
+      }
+      const url = `${window.location.origin}${body.path}`;
+      setShareUrl(url);
+      // Copying is a convenience. A clipboard permission prompt that the
+      // viewer declines must not read as "the link could not be built" —
+      // the link is on screen either way.
+      try {
+        await navigator.clipboard?.writeText(url);
+      } catch {
+        // The URL is rendered below; the reader can copy it by hand.
+      }
+    } catch {
+      setError("Could not build a share link.");
+    } finally {
+      setSharing(false);
+    }
+  }, [result]);
+
   const lines = useMemo(() => (result ? tokenize(result.markdown) : []), [result]);
   const marks = useMemo(() => structureMarks(lines), [lines]);
 
@@ -113,25 +161,34 @@ export default function Converter() {
               : "waiting for a file"}
         </span>
         <div className="tabs" role="tablist" aria-label="Output view">
-          {(["markdown", "chunks"] as View[]).map((key) => (
+          {(["markdown", "chunks", "before"] as View[]).map((key) => (
             <button
               key={key}
               role="tab"
               className="tab"
               aria-selected={view === key}
-              disabled={!result}
+              disabled={!result || (key === "before" && !result.baseline)}
               onClick={() => setView(key)}
             >
-              {key === "chunks" ? `chunks${result ? ` (${result.chunks.length})` : ""}` : "markdown"}
+              {key === "chunks"
+                ? `chunks${result ? ` (${result.chunks.length})` : ""}`
+                : key === "before"
+                  ? "without papyrus"
+                  : "markdown"}
             </button>
           ))}
           {result && (
-            <button
-              className="btn btn--ghost btn--small"
-              onClick={() => navigator.clipboard?.writeText(result.markdown)}
-            >
-              copy
-            </button>
+            <>
+              <button
+                className="btn btn--ghost btn--small"
+                onClick={() => navigator.clipboard?.writeText(result.markdown)}
+              >
+                copy
+              </button>
+              <button className="btn btn--small" onClick={() => void share()} disabled={sharing}>
+                {sharing ? "…" : shareUrl ? "link ready" : "share"}
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -242,12 +299,14 @@ export default function Converter() {
 
         <div className="pane pane--output">
           <div className="pane-head">
-            <span>{view === "chunks" ? "Chunks" : "Markdown"}</span>
+            <span>{view === "chunks" ? "Chunks" : view === "before" ? "Without Papyrus" : "Markdown"}</span>
             {result && (
               <span className="count">
                 {view === "chunks"
                   ? `${result.chunks.reduce((sum, c) => sum + c.token_estimate, 0).toLocaleString()} tokens`
-                  : `${result.word_count.toLocaleString()} words`}
+                  : view === "before"
+                    ? `${(result.baseline ?? "").length.toLocaleString()} chars`
+                    : `${result.word_count.toLocaleString()} words`}
               </span>
             )}
           </div>
@@ -277,6 +336,45 @@ export default function Converter() {
                   ))}
                 </ul>
               </div>
+            )}
+
+            {result?.headline && view !== "before" && (
+              <p
+                className="mono"
+                style={{
+                  fontSize: "0.72rem",
+                  color: "var(--cinnabar)",
+                  borderLeft: "2px solid var(--cinnabar)",
+                  paddingLeft: "0.6rem",
+                  margin: "0 0 0.9rem",
+                  lineHeight: 1.6,
+                }}
+              >
+                {result.headline}
+              </p>
+            )}
+
+            {result && view === "before" && (
+              <>
+                <p
+                  className="mono"
+                  style={{ fontSize: "0.72rem", color: "var(--ink-faint)", margin: "0 0 0.9rem", lineHeight: 1.6 }}
+                >
+                  What a one-line text extraction returns from the same bytes.
+                </p>
+                <pre className="out" style={{ color: "var(--ink-faint)" }}>
+                  {result.baseline || "(it returned nothing at all)"}
+                </pre>
+              </>
+            )}
+
+            {shareUrl && (
+              <p
+                className="mono"
+                style={{ fontSize: "0.7rem", color: "var(--ink-faint)", margin: "0 0 0.9rem", wordBreak: "break-all" }}
+              >
+                Shareable link · <a href={shareUrl}>{shareUrl.replace(/^https?:\/\//, "")}</a>
+              </p>
             )}
 
             {result && view === "markdown" && (

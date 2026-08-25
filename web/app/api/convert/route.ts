@@ -23,6 +23,31 @@ const LIMIT_LABEL = MAX_BYTES >= 1024 * 1024
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
+async function fetchChunks(file: File, chunkSize: string): Promise<unknown[]> {
+  try {
+    const form = new FormData();
+    form.append("file", file, file.name);
+    form.append("chunk_size", chunkSize);
+    const response = await fetch(`${API}/v1/chunk`, { method: "POST", body: form });
+    return response.ok ? ((await response.json()).chunks ?? []) : [];
+  } catch {
+    return [];
+  }
+}
+
+async function fetchComparison(file: File): Promise<Record<string, unknown>> {
+  try {
+    const form = new FormData();
+    form.append("file", file, file.name);
+    const response = await fetch(`${API}/v1/compare`, { method: "POST", body: form });
+    if (!response.ok) return {};
+    const body = await response.json();
+    return { baseline: body.baseline, headline: body.headline, recovered: body.recovered };
+  } catch {
+    return {};
+  }
+}
+
 export async function POST(request: NextRequest) {
   let incoming: FormData;
   try {
@@ -65,20 +90,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Chunks come from the dedicated endpoint so the demo can show both
-    // views from one drop without the user converting twice.
-    let chunks: unknown[] = [];
-    try {
-      const chunkForm = new FormData();
-      chunkForm.append("file", file, file.name);
-      chunkForm.append("chunk_size", String(incoming.get("chunk_size") ?? 1200));
-      const chunkResponse = await fetch(`${API}/v1/chunk`, { method: "POST", body: chunkForm });
-      if (chunkResponse.ok) chunks = (await chunkResponse.json()).chunks ?? [];
-    } catch {
-      // Chunks are a bonus view; a failure here must not lose the Markdown.
-    }
+    // Chunks and the naive-extraction baseline come from their own
+    // endpoints so one drop fills every view. Both are enrichments — a
+    // failure in either must never cost the user their Markdown.
+    const [chunks, comparison] = await Promise.all([
+      fetchChunks(file, String(incoming.get("chunk_size") ?? 1200)),
+      fetchComparison(file),
+    ]);
 
-    return NextResponse.json({ ...payload, chunks });
+    return NextResponse.json({ ...payload, chunks, ...comparison });
   } catch {
     return NextResponse.json(
       {
