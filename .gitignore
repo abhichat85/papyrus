@@ -21,3 +21,4 @@ tests/fixtures/generated/
 tests/fixtures/sample.*
 web/public/samples/
 *.tsbuildinfo
+.vercel
